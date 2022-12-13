@@ -16,6 +16,8 @@ You can use the Apache Kafka trigger in Azure Functions to run your function cod
 ## Example
 ::: zone pivot="programming-language-csharp"
 
+[!INCLUDE functions-bindings-kafka-trigger]
+
 The usage of the trigger depends on the C# modality used in your function app, which can be one of the following modes:
 
 # [In-process](#tab/in-process)
