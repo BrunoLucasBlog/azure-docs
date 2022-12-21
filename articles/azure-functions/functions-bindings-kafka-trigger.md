@@ -34,7 +34,20 @@ The attributes you use depend on the specific event provider.
 
 The following example shows a C# function that reads and logs the Kafka message as a Kafka event:
 
-:::code language="csharp" source="~/azure-functions-kafka-extension/samples/dotnet/Confluent/KafkaTrigger.cs" range="10-21" :::
+```cs
+[FunctionName("KafkaTrigger")]
+        public static void Run(
+            [KafkaTrigger("BrokerList",
+                          "topic",
+                          Username = "ConfluentCloudUserName",
+                          Password = "ConfluentCloudPassword",
+                          Protocol = BrokerProtocol.SaslSsl,
+                          AuthenticationMode = BrokerAuthenticationMode.Plain,
+                          ConsumerGroup = "$Default")] KafkaEventData<string> kevent, ILogger log)
+        {            
+            log.LogInformation($"C# Kafka trigger function processed a message: {kevent.Value}");
+        }
+```
 
 To receive events in a batch, use an input string or `KafkaEventData` as an array, as shown in the following example:
 
