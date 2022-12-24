@@ -71,15 +71,74 @@ To receive events in a batch, use an input string or `KafkaEventData` as an arra
 
 The following function logs the message and headers for the Kafka Event:
 
-:::code language="csharp" source="~/azure-functions-kafka-extension/samples/dotnet/Confluent/KafkaTriggerWithHeaders.cs" range="10-27" :::
+```cs
+[FunctionName("KafkaTriggerSingleWithHeaders")]
+        public static void Run(
+            [KafkaTrigger("BrokerList",
+                          "topic",
+                          Username = "ConfluentCloudUserName",
+                          Password = "ConfluentCloudPassword",
+                          Protocol = BrokerProtocol.SaslSsl,
+                          AuthenticationMode = BrokerAuthenticationMode.Plain,
+                          ConsumerGroup = "$Default")] KafkaEventData<string> kevent, ILogger log)
+        {
+            log.LogInformation($"C# Kafka trigger function processed a message: {kevent.Value}");
+            log.LogInformation("Headers: ");
+            var headers = kevent.Headers;
+            foreach (var header in headers)
+            {
+                log.LogInformation($"Key = {header.Key} Value = {System.Text.Encoding.UTF8.GetString(header.Value)}");
+            }
+        }
+```
 
 You can define a generic [Avro schema] for the event passed to the trigger. The following string value defines the generic Avro schema:
 
-:::code language="csharp" source="~/azure-functions-kafka-extension/samples/dotnet/KafkaFunctionSample/AvroGenericTriggers.cs" range="23-41" :::
+```cs
+const string PageViewsSchema = @"{
+  ""type"": ""record"",
+  ""name"": ""pageviews"",
+  ""namespace"": ""ksql"",
+  ""fields"": [
+    {
+      ""name"": ""viewtime"",
+      ""type"": ""long""
+    },
+    {
+      ""name"": ""userid"",
+      ""type"": ""string""
+    },
+    {
+      ""name"": ""pageid"",
+      ""type"": ""string""
+    }
+  ]
+}";
+
+```
 
 In the following function, an instance of `GenericRecord` is available in the `KafkaEvent.Value` property:
 
-:::code language="csharp" source="~/azure-functions-kafka-extension/samples/dotnet/KafkaFunctionSample/AvroGenericTriggers.cs" range="43-60" :::
+```cs
+[FunctionName(nameof(PageViews))]
+        public static void PageViews(
+           [KafkaTrigger("LocalBroker", "pageviews", AvroSchema = PageViewsSchema, ConsumerGroup = "azfunc")] KafkaEventData<string, GenericRecord>[] kafkaEvents,
+           long[] offsetArray,
+           int[] partitionArray,
+           string[] topicArray,
+           DateTime[] timestampArray,
+           ILogger logger)
+        {
+            for (int i = 0; i < kafkaEvents.Length; i++)
+            {
+                var kafkaEvent = kafkaEvents[i];
+                if (kafkaEvent.Value is GenericRecord genericRecord)
+                {
+                    logger.LogInformation($"[{timestampArray[i]}] {topicArray[i]} / {partitionArray[i]} / {offsetArray[i]}: {GenericToJson(genericRecord)}");
+                }
+            }
+        }
+```
 
 You can define a specific [Avro schema] for the event passed to the trigger. The following defines the `UserRecord` class:
 
