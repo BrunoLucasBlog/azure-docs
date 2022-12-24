@@ -51,7 +51,23 @@ The following example shows a C# function that reads and logs the Kafka message 
 
 To receive events in a batch, use an input string or `KafkaEventData` as an array, as shown in the following example:
 
-:::code language="csharp" source="~/azure-functions-kafka-extension/samples/dotnet/Confluent/KafkaTriggerMany.cs" range="10-24" :::
+```cs
+[FunctionName("KafkaTriggerMany")]
+        public static void Run(
+            [KafkaTrigger("BrokerList",
+                          "topic",
+                          Username = "ConfluentCloudUserName",
+                          Password = "ConfluentCloudPassword",
+                          Protocol = BrokerProtocol.SaslSsl,
+                          AuthenticationMode = BrokerAuthenticationMode.Plain,
+                          ConsumerGroup = "$Default")] KafkaEventData<string>[] events, ILogger log)
+        {       
+            foreach (KafkaEventData<string> kevent in events)
+            {    
+                log.LogInformation($"C# Kafka trigger function processed a message: {kevent.Value}");
+            }
+        }
+```
 
 The following function logs the message and headers for the Kafka Event:
 
