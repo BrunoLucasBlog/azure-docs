@@ -142,11 +142,47 @@ In the following function, an instance of `GenericRecord` is available in the `K
 
 You can define a specific [Avro schema] for the event passed to the trigger. The following defines the `UserRecord` class:
 
-:::code language="csharp" source="~/azure-functions-kafka-extension/samples/dotnet/KafkaFunctionSample/User.cs" range="9-32" :::
+```cs
+public const string SchemaText = @"
+       {
+  ""type"": ""record"",
+  ""name"": ""UserRecord"",
+  ""namespace"": ""KafkaFunctionSample"",
+  ""fields"": [
+    {
+      ""name"": ""registertime"",
+      ""type"": ""long""
+    },
+    {
+      ""name"": ""userid"",
+      ""type"": ""string""
+    },
+    {
+      ""name"": ""regionid"",
+      ""type"": ""string""
+    },
+    {
+      ""name"": ""gender"",
+      ""type"": ""string""
+    }
+  ]
+}";
+```
 
 In the following function, an instance of `UserRecord` is available in the `KafkaEvent.Value` property:
 
-:::code language="csharp" source="~/azure-functions-kafka-extension/samples/dotnet/KafkaFunctionSample/AvroSpecificTriggers.cs" range="16-25" :::
+```cs
+[FunctionName(nameof(User))]
+        public static void User(
+           [KafkaTrigger("LocalBroker", "users", ConsumerGroup = "azfunc")] KafkaEventData<string, UserRecord>[] kafkaEvents,
+           ILogger logger)
+        {
+            foreach (var kafkaEvent in kafkaEvents)
+            {
+                logger.LogInformation($"{JsonConvert.SerializeObject(kafkaEvent.Value)}");
+            }
+        }
+```
 
 For a complete set of working .NET examples, see the [Kafka extension repository](https://github.com/Azure/azure-functions-kafka-extension/blob/dev/samples/dotnet/). 
 
