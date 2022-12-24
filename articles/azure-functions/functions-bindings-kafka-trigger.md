@@ -325,7 +325,18 @@ public const string SchemaText = @"
 
 In the following function, an instance of `UserRecord` is available in the `KafkaEvent.Value` property:
 
-:::code language="csharp" source="~/azure-functions-kafka-extension/samples/dotnet/KafkaFunctionSample/AvroSpecificTriggers.cs" range="16-25" :::
+```cs
+[FunctionName(nameof(User))]
+        public static void User(
+           [KafkaTrigger("LocalBroker", "users", ConsumerGroup = "azfunc")] KafkaEventData<string, UserRecord>[] kafkaEvents,
+           ILogger logger)
+        {
+            foreach (var kafkaEvent in kafkaEvents)
+            {
+                logger.LogInformation($"{JsonConvert.SerializeObject(kafkaEvent.Value)}");
+            }
+        }
+```
 
 For a complete set of working .NET examples, see the [Kafka extension repository](https://github.com/Azure/azure-functions-kafka-extension/blob/dev/samples/dotnet/). 
 
@@ -333,15 +344,68 @@ For a complete set of working .NET examples, see the [Kafka extension repository
 
 The following example shows a C# function that reads and logs the Kafka message as a Kafka event:
 
-:::code language="csharp" source="~/azure-functions-kafka-extension/samples/dotnet-isolated/confluent/KafkaTrigger.cs" range="12-24" :::
+```cs
+ [Function("KafkaTrigger")]
+        public static void Run(
+            [KafkaTrigger("BrokerList",
+                          "topic",
+                          Username = "ConfluentCloudUserName",
+                          Password = "ConfluentCloudPassword",
+                          Protocol = BrokerProtocol.SaslSsl,
+                          AuthenticationMode = BrokerAuthenticationMode.Plain,
+                          ConsumerGroup = "$Default")] string eventData, FunctionContext context)
+        {
+            var logger = context.GetLogger("KafkaFunction");
+            logger.LogInformation($"C# Kafka trigger function processed a message: {JObject.Parse(eventData)["Value"]}");
+        }
+```
 
 To receive events in a batch, use a string array as input, as shown in the following example:
 
-:::code language="csharp" source="~/azure-functions-kafka-extension/samples/dotnet-isolated/confluent/KafkaTriggerMany.cs" range="12-27" :::
+```cs
+[Function("KafkaTriggerMany")]
+        public static void Run(
+            [KafkaTrigger("BrokerList",
+                          "topic",
+                          Username = "ConfluentCloudUserName",
+                          Password = "ConfluentCloudPassword",
+                          Protocol = BrokerProtocol.SaslSsl,
+                          AuthenticationMode = BrokerAuthenticationMode.Plain,
+                          ConsumerGroup = "$Default",
+                          IsBatched = true)] string[] events, FunctionContext context)
+        {
+            foreach (var kevent in events)
+            {
+                var logger = context.GetLogger("KafkaFunction");
+                logger.LogInformation($"C# Kafka trigger function processed a message: {JObject.Parse(kevent)["Value"]}");
+            }
+```
 
 The following function logs the message and headers for the Kafka Event:
 
-:::code language="csharp" source="~/azure-functions-kafka-extension/samples/dotnet-isolated/Confluent/KafkaTriggerWithHeaders.cs" range="12-32" :::
+```cs
+[Function("KafkaTriggerWithHeaders")]
+        public static void Run(
+            [KafkaTrigger("BrokerList",
+                          "topic",
+                          Username = "ConfluentCloudUserName",
+                          Password = "ConfluentCloudPassword",
+                          Protocol = BrokerProtocol.SaslSsl,
+                          AuthenticationMode = BrokerAuthenticationMode.Plain,
+                          ConsumerGroup = "$Default")] string eventData, FunctionContext context)
+        {
+            var eventJsonObject = JObject.Parse(eventData);
+            var logger = context.GetLogger("KafkaFunction");
+            logger.LogInformation($"C# Kafka trigger function processed a message: {eventJsonObject["Value"]}");
+            var headersJArr = eventJsonObject["Headers"] as JArray;
+            logger.LogInformation("Headers for this event: ");
+            foreach (JObject header in headersJArr)
+            {
+                logger.LogInformation($"{header["Key"]} {System.Text.Encoding.UTF8.GetString((byte[])header["Value"])}");
+
+            }
+        }
+```
 
 For a complete set of working .NET examples, see the [Kafka extension repository](https://github.com/Azure/azure-functions-kafka-extension/blob/dev/samples/dotnet-isolated/). 
 
