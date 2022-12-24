@@ -190,7 +190,20 @@ For a complete set of working .NET examples, see the [Kafka extension repository
 
 The following example shows a C# function that reads and logs the Kafka message as a Kafka event:
 
-:::code language="csharp" source="~/azure-functions-kafka-extension/samples/dotnet/EventHub/KafkaTrigger.cs" range="10-21" :::
+```cs
+[FunctionName("KafkaTrigger")]
+        public static void Run(
+            [KafkaTrigger("BrokerList",
+                          "topic",
+                          Username = "$ConnectionString",
+                          Password = "%EventHubConnectionString%",
+                          Protocol = BrokerProtocol.SaslSsl,
+                          AuthenticationMode = BrokerAuthenticationMode.Plain,
+                          ConsumerGroup = "$Default")] KafkaEventData<string> kevent, ILogger log)
+        {            
+            log.LogInformation($"C# Kafka trigger function processed a message: {kevent.Value}");
+        }
+```
 
 To receive events in a batch, use a string array or `KafkaEventData` array as input, as shown in the following example:
 
